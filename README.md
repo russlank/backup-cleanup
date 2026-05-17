@@ -1,15 +1,15 @@
 # backup-cleanup
 
+[![Latest Release](https://img.shields.io/github/v/release/russlank/backup-cleanup?display_name=tag&sort=semver)](https://github.com/russlank/backup-cleanup/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-%23FFDD00.svg?&style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/russlank)
+
+
 A Go replacement for the [`backup-cleanup`](doc/original-backup-cleanup.sh) Bash script that removes old SQL Server backup files according to Grandfather-Father-Son (GFS) retention rules.
 
 `backup-cleanup` is designed to be used alongside [Ola Hallengren's SQL Server Maintenance Solution](https://ola.hallengren.com/) — a widely-used set of SQL Server Agent jobs and stored procedures that produce `FULL`, `DIFF`, and `LOG` backup files.  `backup-cleanup` enforces a GFS retention policy on those files and removes outdated copies from the backup storage host.
 
 The goal is operational compatibility: the binary keeps the same command name, CLI flags, environment/config variable names, retention decisions, log messages, dry-run behavior, and optional `send-pulse` telemetry behavior as the original Bash script.
-
-[![Latest Release](https://img.shields.io/github/v/release/russlank/backup-cleanup?display_name=tag&sort=semver)](https://github.com/russlank/backup-cleanup/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-%23FFDD00.svg?&style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/russlank)
-
 
 ## Quick navigation
 
