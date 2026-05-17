@@ -1,0 +1,26 @@
+# Example configuration for backup-cleanup.
+# This file is intentionally shell-compatible because the original Bash script
+# used `source /etc/backup-utils/backup-cleanup.conf`.
+
+BACKUP_PATH="/mnt/backup01/remote"
+LOG_TAG="backup-cleanup"
+PULSE_BACKUP_HOST_ID="pulse.monitor.local"
+CLEANUP_PULSE_SUBJECT="backup/${PULSE_BACKUP_HOST_ID}/cleanup"
+
+# Set to 0 to disable cleanup without removing the scheduled job.
+CLEANUP_ENABLED=1
+
+# FULL backup retention: Grandfather-Father-Son style.
+FULL_DAILY_RETENTION_DAYS=7
+FULL_WEEKLY_RETENTION_WEEKS=4
+FULL_WEEKLY_DAY="Sunday"
+FULL_MONTHLY_RETENTION_MONTHS=12
+
+# DIFF and LOG retention.
+DIFF_RETENTION_DAYS=14
+LOG_RETENTION_DAYS=7
+
+# Space-separated patterns. A file is excluded if its full path contains a pattern.
+# Example:
+# EXCLUDE_PATTERNS="do-not-delete keep-forever"
+EXCLUDE_PATTERNS=""

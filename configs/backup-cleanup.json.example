@@ -1,0 +1,20 @@
+{
+  "_comment": "Example configuration for backup-cleanup (JSON format). Copy to the path set in CONFIG_FILE and remove this _comment key.",
+
+  "BACKUP_PATH": "/mnt/backup01/remote",
+  "LOG_TAG": "backup-cleanup",
+  "PULSE_BACKUP_HOST_ID": "pulse.monitor.local",
+  "CLEANUP_PULSE_SUBJECT": "backup/pulse.monitor.local/cleanup",
+
+  "CLEANUP_ENABLED": 1,
+
+  "FULL_DAILY_RETENTION_DAYS": 7,
+  "FULL_WEEKLY_RETENTION_WEEKS": 4,
+  "FULL_WEEKLY_DAY": "Sunday",
+  "FULL_MONTHLY_RETENTION_MONTHS": 12,
+
+  "DIFF_RETENTION_DAYS": 14,
+  "LOG_RETENTION_DAYS": 7,
+
+  "EXCLUDE_PATTERNS": ""
+}

@@ -1,0 +1,12 @@
+# Build output
+/dist/
+/bin/
+
+# Local editor files
+.idea/
+.vscode/
+*.swp
+
+# Test/cache output
+*.test
+coverage.out

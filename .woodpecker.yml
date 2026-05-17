@@ -1,0 +1,164 @@
+---
+# Woodpecker CI pipeline for backup-cleanup
+#
+# Repository:  https://git.digixoil.se/digixoil/backup-cleanup
+# CI docs:     https://woodpecker-ci.org/docs/usage/pipeline-syntax
+#
+# ── Required secrets ─────────────────────────────────────────────────────────
+#
+#   Configure in Woodpecker UI:
+#     Repository → Settings → Secrets
+#
+#   Name              Description
+#   ────────────────  ──────────────────────────────────────────────────────────
+#   gitea_api_key     Gitea personal access token with write:repository scope.
+#                     Generate at:
+#                       https://git.digixoil.se/-/user/settings/applications
+#                     Required permissions:
+#                       ✓ issue  (Gitea bundles releases under the issues API)
+#                       ✓ write:repository
+#
+# ── Release workflow ─────────────────────────────────────────────────────────
+#
+#   Push a semver tag to publish a Gitea release with uploaded binaries:
+#
+#     git tag v1.2.3
+#     git push origin v1.2.3
+#
+#   The pipeline will:
+#     1. Lint, vet, and test the code
+#     2. Cross-compile for linux/amd64, linux/arm64, and windows/amd64
+#     3. Create a Gitea release for the tag
+#     4. Upload the binaries and SHA256SUMS as release assets
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+variables:
+  - &go_image 'golang:1.26-alpine'
+
+steps:
+
+  # ── 1. Format check ─────────────────────────────────────────────────────────
+  #
+  #   Fails the build if any file is not gofmt-formatted.
+  #   Run `make fmt` locally to fix.
+  lint:
+    image: *go_image
+    commands:
+      - |
+        unformatted=$(gofmt -l .)
+        if [ -n "$unformatted" ]; then
+          echo "The following files are not gofmt-formatted:"
+          echo "$unformatted"
+          echo "Run: make fmt"
+          exit 1
+        fi
+    when:
+      - event: [push, tag, pull_request]
+
+  # ── 2. Static analysis ──────────────────────────────────────────────────────
+  vet:
+    image: *go_image
+    commands:
+      - go vet ./...
+    when:
+      - event: [push, tag, pull_request]
+
+  # ── 3. Unit & integration tests ─────────────────────────────────────────────
+  test:
+    image: *go_image
+    commands:
+      - go test -count=1 ./...
+    when:
+      - event: [push, tag, pull_request]
+
+  # ── 4. Cross-compile for Linux amd64 + arm64 ────────────────────────────────
+  #
+  #   Runs on every event so pull requests cannot merge a broken build.
+  #   VERSION is taken from the tag (e.g. v1.2.3) when available, otherwise "dev".
+  build:
+    image: *go_image
+    commands:
+      - apk add --no-cache make
+      - VERSION="${CI_COMMIT_TAG:-dev}"
+      - COMMIT="${CI_COMMIT_SHA:-unknown}"
+      - DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      - make VERSION="$VERSION" COMMIT="$COMMIT" DATE="$DATE" dist
+    when:
+      # Build on every push and every tag, but skip draft pull requests.
+      - event: [push, tag]
+      - event: pull_request
+        branch: "**"
+
+  # ── 5. Publish to Gitea Releases ────────────────────────────────────────────
+  #
+  #   Triggered only on tag events.
+  #   Creates a release for the tag (or reuses an existing one) then uploads
+  #   the two compiled binaries and the SHA256SUMS file as release assets.
+  release:
+    image: alpine:3.20
+    environment:
+      GITEA_API_KEY:
+        from_secret: gitea_api_key
+    commands:
+      - apk add --no-cache curl jq
+      - |
+        set -eu
+
+        GITEA_BASE="https://git.digixoil.se"
+        REPO="digixoil/backup-cleanup"
+        TAG="$CI_COMMIT_TAG"
+
+        # Detect pre-release from tags that contain a hyphen, e.g. v1.0.0-rc.1
+        PRERELEASE=$(echo "$TAG" | grep -q '-' && echo 'true' || echo 'false')
+
+        echo "==> Checking for existing release for tag $TAG ..."
+        EXISTING=$(curl -sf \
+          -H "Authorization: token $GITEA_API_KEY" \
+          "$GITEA_BASE/api/v1/repos/$REPO/releases/tags/$TAG" 2>/dev/null || echo '{}')
+        RELEASE_ID=$(printf '%s' "$EXISTING" | jq -r '.id // empty')
+
+        if [ -n "$RELEASE_ID" ]; then
+          echo "    Found existing release ID: $RELEASE_ID"
+        else
+          echo "==> Creating release $TAG ..."
+          RESPONSE=$(curl -sf \
+            -X POST \
+            -H "Authorization: token $GITEA_API_KEY" \
+            -H "Content-Type: application/json" \
+            "$GITEA_BASE/api/v1/repos/$REPO/releases" \
+            -d "$(jq -cn \
+              --arg tag        "$TAG" \
+              --arg name       "$TAG" \
+              --arg body       "Release $TAG" \
+              --argjson pre    "$PRERELEASE" \
+              '{tag_name: $tag, name: $name, body: $body, draft: false, prerelease: $pre}')")
+          RELEASE_ID=$(printf '%s' "$RESPONSE" | jq -r '.id // empty')
+          if [ -z "$RELEASE_ID" ]; then
+            echo "ERROR: could not create release. API response:"
+            printf '%s\n' "$RESPONSE"
+            exit 1
+          fi
+          echo "    Created release ID: $RELEASE_ID"
+        fi
+
+        echo "==> Uploading artifacts ..."
+        for FILE in \
+          dist/backup-cleanup-linux-amd64 \
+          dist/backup-cleanup-linux-arm64 \
+          dist/backup-cleanup-windows-amd64.exe \
+          dist/SHA256SUMS; do
+          NAME=$(basename "$FILE")
+          echo "    $NAME"
+          curl -sf \
+            -X POST \
+            -H "Authorization: token $GITEA_API_KEY" \
+            -F "attachment=@$FILE;filename=$NAME" \
+            "$GITEA_BASE/api/v1/repos/$REPO/releases/$RELEASE_ID/assets" \
+            > /dev/null
+        done
+
+        echo "==> Done."
+        echo "    ${GITEA_BASE}/${REPO}/releases/tag/${TAG}"
+    when:
+      - event: tag
