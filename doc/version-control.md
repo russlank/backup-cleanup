@@ -20,7 +20,7 @@ This document explains the Git branching model, commit conventions, tagging stra
 
 | Property | Value |
 |---|---|
-| Remote URL | `https://git.digixoil.se/digixoil/backup-cleanup` |
+| Remote URL | `https://github.com/russlank/backup-cleanup` |
 | Default branch | `main` |
 | Development branch | `develop` |
 | CI | Woodpecker (see [doc/ci-pipeline.md](ci-pipeline.md)) |
@@ -217,7 +217,7 @@ Open the Woodpecker dashboard and confirm that:
 ### Step 4 — Verify the release
 
 ```
-https://git.digixoil.se/digixoil/backup-cleanup/releases
+https://github.com/russlank/backup-cleanup/releases
 ```
 
 Confirm that:

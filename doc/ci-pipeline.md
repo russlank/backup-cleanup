@@ -22,7 +22,7 @@ This document describes the Woodpecker CI pipeline for `backup-cleanup`, the equ
 | Component | Value |
 |---|---|
 | CI system | [Woodpecker CI](https://woodpecker-ci.org) |
-| Source repository | `https://git.digixoil.se/digixoil/backup-cleanup` (private Gitea) |
+| Source repository | `https://github.com/russlank/backup-cleanup` (private Gitea) |
 | Binary release storage | Gitea release assets on the same server |
 | Go image | `golang:1.26-alpine` (change `&go_image` to upgrade) |
 | Release upload image | `alpine:3.20` |
@@ -317,7 +317,7 @@ When a tag is pushed, the `release` step:
 After the pipeline finishes, the release is visible at:
 
 ```
-https://git.digixoil.se/digixoil/backup-cleanup/releases
+https://github.com/russlank/backup-cleanup/releases
 ```
 
 **Pre-release detection:** tags containing a hyphen (e.g. `v1.0.0-rc.1`, `v2.0.0-beta.3`) are automatically published as pre-releases (`"prerelease": true`).

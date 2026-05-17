@@ -23,7 +23,7 @@ This document explains how `backup-cleanup` is structured as a Go program, why e
 backup-cleanup/
 ├── .woodpecker.yml          # CI pipeline (see doc/ci-pipeline.md)
 ├── Makefile                 # Build and test convenience targets
-├── go.mod                   # Module path: git.digixoil.se/digixoil/backup-cleanup
+├── go.mod                   # Module path: github.com/russlank/backup-cleanup
 ├── cmd/backup-cleanup/
 │   ├── main.go              # All application code lives here
 │   └── main_test.go         # All tests live here (same package)
@@ -49,7 +49,7 @@ The application is deliberately kept in **one source file** (`main.go`).  This m
 ### Module path
 
 ```
-git.digixoil.se/digixoil/backup-cleanup
+github.com/russlank/backup-cleanup
 ```
 
 The module path is set in `go.mod`.  It matches the Gitea repository URL so that `go get` works without any extra configuration.
